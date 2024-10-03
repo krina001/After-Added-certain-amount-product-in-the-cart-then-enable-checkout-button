@@ -1,0 +1,94 @@
+<!----------------------------------- Add below code into the class name of div "m-cart__subtotal" -------------------------------------->
+          {% comment %} ###########Threshold bar###########{% endcomment %}
+            
+            <div class="main-shippingbar" data-range="1000" style="margin: 15px 0;">
+              {% assign shipping = 1000 %}
+              {% assign cart_value = cart.total_price | divided_by: 100 %}
+              {% assign bar_width = cart_value | times: 100 | divided_by: shipping %}
+              {% if cart_value > shipping %}
+                {% assign bar_width = 100 %}
+              {% endif %}
+              {% if cart_value > shipping %}
+                <div class="head-text"><h6>reached</h6></div>
+              {% elsif cart_value == shipping %}
+                <div class="head-text"><h6>equal</h6></div>
+              {% else %}
+                <div class="head-text" data-cart-subtotal-price>
+                  <h6>You're only {{ shipping | minus: cart_value | times: 100 | money }} away from free shipping.</h6>
+                </div>
+              {% endif %}
+              <div class="html_container" style="background-color: #e5e5e5;height: 5px;">
+                <div
+                  class="bar html money"
+                  style="width: {{ bar_width }}%; background-color: #ffbc11;height: 5px;"
+                ></div>
+              </div>
+            </div>
+             {% comment %} ###########End Threshold bar###########{% endcomment %}
+
+<!----------------------------------- Add below Attribute into the id name of "cart-total" div -------------------------------->
+                data-cart-subtotal-price="{{ cart.total_price | divided_by: 100 }}"
+                
+<!---------------------------- checkout button code compare with old code and add changes or replace the button code --------------------------------->
+          <button
+            type="submit"
+            form="cart-drawer-form"
+            class="m-button m-button--primary m:w-full cart__checkout-button"
+            name="checkout"
+            disabled
+            {% if show_terms %}
+              data-terms-action disabled
+            {% endif %}
+          >
+            <span>{{ 'cart.general.checkout' | t }}</span>
+          </button>
+<!-------------------------------- Add below code into the end of the file ------------------------------>
+<script>                      
+/* Start Enable Free Shipping progress bar */  
+  
+document.addEventListener('DOMContentLoaded', function () {
+  updateCheckoutButton();
+  updateCartListeners();
+});
+  
+function updateCheckoutButton() {
+      const checkoutButton = document.querySelector('.cart__checkout-button');
+  const cartTotalElement = document.getElementById('cart-total');
+    const cartTotal = parseFloat(cartTotalElement.getAttribute('data-cart-subtotal-price'));
+
+    if (cartTotal >= 1000) {
+        checkoutButton.removeAttribute('disabled');
+        checkoutButton.classList.remove('disabled'); // Adjust based on your theme's styling
+    } else {
+        checkoutButton.setAttribute('disabled', 'disabled');
+        checkoutButton.classList.add('disabled'); // Adjust based on your theme's styling
+    }
+}
+  
+function fetchCartTotal() {
+  const cartTotalElement = document.getElementById('cart-total');
+    fetch('/cart.js')
+    .then(response => response.json())
+    .then(data => {
+        const total = data.total_price / 100;
+        cartTotalElement.setAttribute('data-cart-subtotal-price', total);
+        updateCheckoutButton();
+    })
+    .catch(error => console.error('Error fetching cart:', error));
+}
+  
+function updateCartListeners(){
+  const { routes: e } = window.MinimogSettings;
+  document.addEventListener(`${e.cart}?section_id=cart-template`, fetchCartTotal);
+
+  document.querySelectorAll('.m-add-to-cart').forEach(button => {
+    button.addEventListener('click', function () {
+      setTimeout(() => {
+          document.dispatchEvent(new Event(`${e.cart}?section_id=cart-template`));
+      }, 500);
+    });
+  });
+}
+
+/* End Enable Free Shipping progress bar */
+</script>
